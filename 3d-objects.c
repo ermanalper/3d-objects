@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include <math.h>
 
 #define WIDTH 900
 #define HEIGHT 600
@@ -39,9 +40,34 @@ void print_object(SDL_Surface* psurface, Vec3 points[], int n) {
     }
 }
 
+Vec3 rotatePitch(Vec3 p, float angleInRadians) {
+    Vec3 result;
+    float cosA = cos(angleInRadians);
+    float sinA = sin(angleInRadians);
+
+    result.x = p.x; // X değişmez
+    result.y = p.y * cosA - p.z * sinA;
+    result.z = p.y * sinA + p.z * cosA;
+
+    return result;
+}
+
+Vec3 rotateYaw(Vec3 p, float angleInRadians) {
+    Vec3 result;
+    float cosA = cos(angleInRadians);
+    float sinA = sin(angleInRadians);
+
+    result.x = p.x * cosA + p.z * sinA;
+    result.y = p.y; // Y değişmez
+    result.z = -p.x * sinA + p.z * cosA;
+
+    return result;
+}
 
 int main()
 {
+    SDL_Rect erase_rect = (SDL_Rect) {50, 50, 800, 800};
+
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("SDL_Init Error: %s\n", SDL_GetError());
         return 1;
@@ -75,11 +101,51 @@ int main()
 
     SDL_UpdateWindowSurface(pwindow);
 	
-
     SDL_Event e;
     int running = 1;
+    int rl_rotate = 0;
+    int ud_rotate = 0;
+    float angle = 0.174f; //10 degrees in radian
     while (running) {
         while (SDL_PollEvent(&e)) {
+	    rl_rotate = 0;
+	    ud_rotate = 0;
+	    if (e.key.keysym.sym == SDLK_RIGHT) {
+		rl_rotate = 1;    
+	    } else if (e.key.keysym.sym == SDLK_LEFT) {
+		rl_rotate = -1;
+	    } else if (e.key.keysym.sym == SDLK_UP) {
+		ud_rotate = 1;
+            } else if (e.key.keysym.sym == SDLK_DOWN) {
+	    	ud_rotate = -1;
+	    }
+	    if (rl_rotate != 0) {
+		//yaw
+		for (int i = 0; i < 8; i++) {
+		    Vec3 p = block.v3[i];
+		    block.v3[i] = rotateYaw(p, rl_rotate * angle);
+		}
+		//erase old
+		//redraw
+		SDL_FillRect(psurface, &erase_rect, 0x00000000);
+		print_object(psurface, block.v3, 8);
+		SDL_UpdateWindowSurface(pwindow);
+	    } else if (ud_rotate != 0) {
+		//pitch
+	    	for (int i = 0; i < 8; i++) {
+		    Vec3 p = block.v3[i];
+		    block.v3[i] = rotatePitch(p, ud_rotate * angle);
+		}
+		//erase old
+		//redraw
+			
+		SDL_FillRect(psurface, &erase_rect, 0x00000000);
+		print_object(psurface, block.v3, 8);
+		SDL_UpdateWindowSurface(pwindow);
+	    }
+    	   	    
+
+
             if (e.type == SDL_QUIT)
                 running = 0;
         }
