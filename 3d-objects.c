@@ -3,6 +3,42 @@
 
 #define WIDTH 900
 #define HEIGHT 600
+#define SCALE 1000
+typedef struct Vec3 {
+    float x, y, z;
+} Vec3;
+
+typedef struct Vec2 {
+    float x, y;
+} Vec2;
+struct Block {
+    Vec3 v3[8];	    
+	
+};
+Vec2 project(Vec3 p) {
+    float d = 4.0f;
+    return (Vec2) {
+	p.x / (p.z + d),
+	p.y / (p.z + d)
+    };
+}
+void scale_and_print(Vec2 p, SDL_Surface* psurface) {
+    //prints single point
+    int sx = (int)(p.x * SCALE + WIDTH / 2);
+    int sy = (int)(p.y * (-1) * SCALE + HEIGHT / 2);
+    SDL_Rect pix = (SDL_Rect){sx, sy, 3, 3};
+    SDL_FillRect(psurface, &pix, 0xFFFFFFFF);
+
+}
+void print_object(SDL_Surface* psurface, Vec3 points[], int n) {
+    for (int i = 0; i < n; i++) {
+    	Vec3 p = points[i];
+	p.z += 200;
+	Vec2 projection = project(p);
+   	scale_and_print(projection, psurface);
+    }
+}
+
 
 int main()
 {
@@ -27,6 +63,16 @@ int main()
     }
 	
     SDL_Surface* psurface = SDL_GetWindowSurface(pwindow);
+    
+    struct Block block = {
+    .v3 = {
+            {24, 24, 24}, {24, 24, -24}, {24, -24, 24}, {-24, 24, 24},
+            {24, -24, -24}, {-24, 24, -24}, {-24, -24, 24}, {-24, -24, -24}
+        }
+   };
+
+    print_object(psurface, block.v3, 8);
+
     SDL_UpdateWindowSurface(pwindow);
 	
 
@@ -38,9 +84,9 @@ int main()
                 running = 0;
         }
     }
-
     SDL_DestroyWindow(pwindow);
     SDL_Quit();
+    
     return 0;
 }
 
